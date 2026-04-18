@@ -1,0 +1,6 @@
+[submodule "agentforge-gateway"]
+	path = agentforge-gateway
+	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-gateway
+[submodule "agentforge-orchestrator"]
+	path = agentforge-orchestrator
+	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-orchestrator
