@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.*.local
+docker-compose.override.yml
+
+/mssql-data/
+/rabbitmq-data/
+/redis-data/
+/storage/
+
+.DS_Store
+Thumbs.db
+
+*.swp
+.idea/
+.vscode/
+*.log
