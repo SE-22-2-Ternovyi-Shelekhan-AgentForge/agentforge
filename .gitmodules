@@ -4,3 +4,9 @@
 [submodule "agentforge-orchestrator"]
 	path = agentforge-orchestrator
 	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-orchestrator
+[submodule "agentforge-worker-service"]
+	path = agentforge-worker-service
+	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-worker-service
+[submodule "agentforge-web"]
+	path = agentforge-web
+	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-web

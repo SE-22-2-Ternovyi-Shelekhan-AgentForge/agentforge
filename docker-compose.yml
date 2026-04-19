@@ -1,18 +1,102 @@
-version: '3.8'
-
 services:
   gateway:
-    build: ./agentforge-gateway/src/AgentForge.Gateway
+    build:
+      context: ./agentforge-gateway/src/AgentForge.Gateway
+      dockerfile: Dockerfile
     container_name: gateway
     ports:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ReverseProxy__Clusters__orchestrator-cluster__Destinations__node1__Address=http://orchestrator:8080
     depends_on:
       - orchestrator
+    networks:
+      - agentforge-net
 
   orchestrator:
-    build: ./agentforge-orchestrator/src/AgentForge.Orchestrator
+    build:
+      context: ./agentforge-orchestrator/src/AgentForge.Orchestrator
+      dockerfile: Dockerfile
     container_name: orchestrator
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AgentForgeDb;User Id=sa;Password=YourSecurePassword123!;TrustServerCertificate=True;
+      - DatabaseSettings__RunMigrationsOnStartup=true
+      - RabbitMQ__Host=rabbitmq
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - agentforge-net
+
+  frontend:
+    build:
+      context: ./agentforge-web/agentforge-web
+    container_name: frontend
+    ports:
+      - "3000:80"
+    networks:
+      - agentforge-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: agentforge-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourSecurePassword123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql/data
+    networks:
+      - agentforge-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: agentforge-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agentforge-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentforge-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - agentforge-net
+
+  worker:
+    build:
+      context: ./agentforge-worker-service 
+      dockerfile: Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      ollama:
+        condition: service_started 
+    deploy:
+      replicas: 2
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - OLLAMA_HOST=http://ollama:11434
+    networks:
+      - agentforge-net
+
+networks:
+  agentforge-net:
+    driver: bridge
+
+volumes:
+  ollama-models:
+  mssql-data:
