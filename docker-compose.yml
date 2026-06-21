@@ -9,8 +9,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ReverseProxy__Clusters__orchestrator-cluster__Destinations__node1__Address=http://orchestrator:8080
+      - Cors__AllowedOrigins__0=http://localhost:3000
     depends_on:
-      - orchestrator
+      orchestrator:
+        condition: service_healthy
     networks:
       - agentforge-net
 
@@ -24,9 +26,21 @@ services:
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AgentForgeDb;User Id=sa;Password=YourSecurePassword123!;TrustServerCertificate=True;
       - DatabaseSettings__RunMigrationsOnStartup=true
       - RabbitMQ__Host=rabbitmq
+      - Jwt__Issuer=AgentForge.Orchestrator
+      - Jwt__Audience=AgentForge.Client
+      - Jwt__Key=${JWT_KEY:-NmC8J1zqQDY2OpAmaRopvJ9VA8PoqPodm2bC92zmqnk}
+      - Jwt__ExpiryMinutes=120
     depends_on:
-      - sqlserver
-      - rabbitmq
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - agentforge-net
 
@@ -42,6 +56,7 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: agentforge-sqlserver
+    user: root
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=YourSecurePassword123!
@@ -49,6 +64,12 @@ services:
       - "1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql/data
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourSecurePassword123!", "-C", "-Q", "SELECT 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks:
       - agentforge-net
 
@@ -59,10 +80,11 @@ services:
       - "5672:5672"
       - "15672:15672"
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
     networks:
       - agentforge-net
 
