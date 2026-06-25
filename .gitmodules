@@ -7,6 +7,7 @@
 [submodule "agentforge-worker-service"]
 	path = agentforge-worker-service
 	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-worker-service
+	branch = main
 [submodule "agentforge-web"]
 	path = agentforge-web
 	url = https://github.com/SE-22-2-Ternovyi-Shelekhan-AgentForge/agentforge-web

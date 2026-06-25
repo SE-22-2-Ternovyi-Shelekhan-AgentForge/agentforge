@@ -95,6 +95,13 @@ services:
       - "11434:11434"
     volumes:
       - ollama-models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -131,7 +138,7 @@ services:
     deploy:
       replicas: 2
     environment:
-      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/?heartbeat=0
       - OLLAMA_HOST=http://ollama:11434
       - DEFAULT_MODEL=${AGENT_MODEL:-qwen2.5:7b}
       - SUPERVISOR_MODEL=${AGENT_MODEL:-qwen2.5:7b}
